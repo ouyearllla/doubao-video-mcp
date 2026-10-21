@@ -1,0 +1,51 @@
+{
+  "name": "doubao-video-mcp",
+  "version": "1.2.2",
+  "description": "通过本机豆包桌面客户端生成和下载视频的 MCP 工具，支持模型、比例与时长设置。",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ouyearllla/doubao-video-mcp.git"
+  },
+  "homepage": "https://github.com/ouyearllla/doubao-video-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/ouyearllla/doubao-video-mcp/issues"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "os": [
+    "win32"
+  ],
+  "bin": {
+    "doubao-video": "bin/doubao-video.mjs"
+  },
+  "files": [
+    "bin/",
+    "lib/",
+    "mcp/",
+    "bridge/",
+    "skills/",
+    "examples/",
+    "README.md",
+    "PUBLISHING.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test",
+    "check": "node scripts/check-package.mjs",
+    "prepublishOnly": "node scripts/check-package.mjs"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "keywords": [
+    "mcp",
+    "doubao",
+    "video",
+    "windows",
+    "stdio"
+  ]
+}

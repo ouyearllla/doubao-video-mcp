@@ -1,0 +1,8 @@
+{
+  "model": "seedance_v2.0_mini",
+  "ratio": "9:16",
+  "duration": 10,
+  "prompt": "与draft完全相同的完整提示词",
+  "request_id": "REPLACE-WITH-UNIQUE-ID",
+  "commit": true
+}
