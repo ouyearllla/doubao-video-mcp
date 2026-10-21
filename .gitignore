@@ -14,6 +14,7 @@ installation.json
 mcp-client-config.json
 runtime.json
 *.mp4
+!docs/demo.mp4
 *.sqlite*
 Thumbs.db
 .DS_Store

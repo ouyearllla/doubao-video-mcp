@@ -2,9 +2,19 @@
 
 [npm 安装包](https://www.npmjs.com/package/doubao-video-mcp) · [GitHub 源码](https://github.com/ouyearllla/doubao-video-mcp)
 
-让 AI Agent 使用你电脑上的豆包生成、查询和下载视频。非豆包官方产品，使用你自己的账号与额度。
+通过 MCP，让 AI Agent 直接操作本机豆包桌面客户端，**生成、查询和下载视频**。支持自选模型、比例与时长，优先下载无水印版，也能恢复已有任务。
+
+适用于 Codex、CodeBuddy、WorkBuddy，以及其他支持 **stdio MCP** 的客户端。非豆包官方产品，使用你自己的账号与额度。
 
 **需要：Windows 桌面环境、Node.js 22+、豆包桌面客户端。**
+
+## 36 秒演示
+
+[![观看 MCP 视频生成与下载演示](https://raw.githubusercontent.com/ouyearllla/doubao-video-mcp/main/docs/demo-cover.png)](https://github.com/ouyearllla/doubao-video-mcp/blob/main/docs/demo.mp4)
+
+**[观看 / 下载演示视频](https://github.com/ouyearllla/doubao-video-mcp/blob/main/docs/demo.mp4)**：设置参数 → 写入提示词 → 提交确认 → 查询进度 → 下载 → 播放成品。
+
+真实 MCP 调用与客户端录制，等待过程已压缩，个人信息已隐藏。示例生成 5 秒海景视频，实际参数可自行设置。
 
 ## 安装
 
@@ -22,7 +32,7 @@ npm install -g doubao-video-mcp
 
 Codex 自动注册。其他客户端请将命令生成的 JSON 配置导入 MCP 设置；WorkBuddy 中还需信任并启用 `doubao`。完成后重新连接 MCP。
 
-可选：需要安装配套 Skill 时，用 `--skill-dir "你的客户端技能目录"` 替代 `--skip-skill`。MCP 可以独立使用。
+MCP 负责连接豆包、生成与下载；配套 Skill 提供调用流程，按需安装。需要 Skill 时，用 `--skill-dir "你的客户端技能目录"` 替代 `--skip-skill`。
 
 ## 使用
 
