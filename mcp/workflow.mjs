@@ -1,7 +1,6 @@
 import {createHash} from 'node:crypto';
-export const version='1.2.2';
-// The desktop-launch fix does not change the local bridge HTTP protocol.
-export const bridgeVersion='1.2.0';
+export const version='1.2.3';
+export const bridgeVersion='1.2.3';
 export const confirmationKey=id=>'__internal_confirm_'+createHash('sha256').update(id).digest('hex');
 export async function waitFor(read,ready,{attempts=30,interval=300,label='客户端'}={}){
  let last,error;

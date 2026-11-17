@@ -5,7 +5,7 @@ description: 使用本机豆包桌面客户端生成和下载视频，或检查�
 
 # 豆包视频
 
-使用doubao MCP，不依赖截图坐标。默认Seedance 2.0 Fast、16:9、15秒；用户可定制model、ratio、duration。模型编号：Fast=seedance_v2.0，Mini=seedance_v2.0_mini，2.0=seedance_v2.0_std，2.5=seedance_v2.5。实际可用性以当前客户端选项与账号权限为准，不静默替换。
+使用doubao MCP，不依赖截图坐标。默认Seedance 2.0 Fast、16:9、15秒；用户可定制model、ratio、duration。模型编号：Fast=seedance_v2.0，Mini=seedance_v2.0_mini，2.0=seedance_v2.0_std，2.5=seedance_v2.5，2.5 Flash=seedance_v2.5_flash。实际可用性以当前客户端选项与账号权限为准，不静默替换。
 
 ## 连接与参数
 

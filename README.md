@@ -69,6 +69,16 @@ Codex 用户将第二条改为 `doubao-video setup --client codex`。自定义�
 
 更多命令：`doubao-video --help`；工具列表：`doubao-video tools`；调用示例见 `examples/`。
 
+## 1.2.3 更新
+
+- 新增 Seedance 2.5 Flash（`seedance_v2.5_flash`），普通 Seedance 2.5 继续使用 `seedance_v2.5`。
+- 适配新版豆包聊天页。读取当前视频菜单中的真实选项，用客户端原有菜单设置模型、比例和时长，提交前复核选中状态与界面显示。
+- 修复富文本草稿中空段落被读成多余换行，导致提示词写入校验失败的问题。
+
+Windows 实测覆盖 Flash 的 9:16、8 秒与 15 秒设置，并完成了带参考图的提交、确认、任务查询和下载。可用模型与额度由当前客户端及账号决定。
+
+升级后运行 `doubao-video setup --client <客户端>`，再断开并重新连接 MCP。在仍运行另一安装来源的旧桥接时，先停止旧桥接再重连。
+
 ## 1.2.2 更新
 
 改由 Windows 桌面启动豆包，减少宿主临时工具环境对启动的影响。新启动的连接结果包含 `launch.launch_method: windows_desktop_shell`；复用现有窗口时返回 `client_reused:true`。

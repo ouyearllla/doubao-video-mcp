@@ -1,4 +1,4 @@
-export const models={'seedance_v2.0':'Seedance 2.0 Fast','seedance_v2.0_mini':'Seedance 2.0 Mini','seedance_v2.0_std':'Seedance 2.0', 'seedance_v2.5':'Seedance 2.5'};
+export const models={'seedance_v2.0':'Seedance 2.0 Fast','seedance_v2.0_mini':'Seedance 2.0 Mini','seedance_v2.0_std':'Seedance 2.0', 'seedance_v2.5':'Seedance 2.5', 'seedance_v2.5_flash':'Seedance 2.5 Flash'};
 export function videoSettings(args={}){
  const settings={model:args.model??'seedance_v2.0',ratio:args.ratio??'16:9',duration:args.duration??15};
  if(!Object.hasOwn(models,settings.model))throw Error('不支持的模型编号');
@@ -11,9 +11,14 @@ export function assertVideoSelection(check,expected,prompt){
  if(check.text.trim()!==prompt.trim())throw Error('输入框与请求prompt不一致；拒绝发送');
  if(!check.buttonFound||check.disabled)throw Error('发送按钮不可用');
  if(check.model!==s.model||check.ratio!==s.ratio||String(check.duration)!==String(s.duration))throw Error('当前视频参数与请求不一致；拒绝发送');
- const escaped=models[s.model].replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
- const modelMatches=new RegExp(escaped+(s.model==='seedance_v2.0_std'?'(?!\\s+(?:Fast|Mini))':'')).test(check.uiText);
- if(!modelMatches||!check.uiText.includes(s.ratio==='auto'?'自动':s.ratio)||!new RegExp('(?:^|\\D)'+s.duration+'s(?![0-9])').test(check.uiText))throw Error('视频界面显示与参数状态不一致；拒绝发送');
+ if(!videoSettingsMatchUI(check.uiText,s))throw Error('视频界面显示与参数状态不一致；拒绝发送');
+}
+export function videoSettingsMatchUI(text,s){
+ const modelLabel=models[s.model];
+ return text.includes(modelLabel)
+  && !Object.values(models).some(label=>label!==modelLabel&&label.startsWith(modelLabel)&&text.includes(label))
+  && text.includes(s.ratio==='auto'?'自动':s.ratio)
+  && new RegExp('(?:^|\\D)'+s.duration+'s(?![0-9])').test(text);
 }
 export function confirmationPrompt(text,expected){
  const s=videoSettings(expected),marker='确认后我再开始生成视频',end=text.lastIndexOf(marker);

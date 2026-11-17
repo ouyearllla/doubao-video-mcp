@@ -1,5 +1,6 @@
-import {liveVideoControls} from './client-controls.mjs';
+import {liveVideoControls,prepareModernVideo} from './client-controls.mjs';
 import {videoSettings,assertVideoSelection,confirmationPrompt} from './video-settings.mjs';
+import {bridgeVersion} from '../mcp/workflow.mjs';
 import http from 'node:http';
 import {spawn} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
@@ -43,9 +44,11 @@ async function connect(id) {
   };
 }
 // 从客户端已加载的Webpack缓存获取函数；不读取Cookie、账号密钥或存储凭据。
-const bootstrap = `(()=>{if(!globalThis.__doubaoLocalRequire){const chunks=globalThis['@flow-web/desktop:stable'];if(!chunks)throw Error('当前页面尚未加载豆包聊天模块');chunks.push([['doubao_local_bridge_'+Date.now()],{},r=>{globalThis.__doubaoLocalRequire=r}]);}return true})()`;
+const bootstrap = `(()=>{if(!globalThis.__doubaoLocalRequire){const chunks=globalThis['chunk_@flow-web/desktop']??globalThis['@flow-web/desktop:stable'];if(!Array.isArray(chunks))throw Error('当前页面尚未加载豆包聊天模块');chunks.push([['doubao_local_bridge_'+Date.now()],{},r=>{globalThis.__doubaoLocalRequire=r}]);}return true})()`;
+const modernRuntime = `Array.isArray(globalThis['chunk_@flow-web/desktop'])`;
+const readControls = '('+liveVideoControls.toString()+')()';
 const editorSelector='[data-testid="chat_input_input"] [contenteditable="true"],[data-testid="chat_input_input"][contenteditable="true"],textarea';
-const readEditor=String.raw`e=>('value'in e)?e.value:[...e.children].map(p=>p.innerText).join('\n')`;
+const readEditor=String.raw`e=>('value'in e)?e.value:[...e.children].map(p=>p.innerText==='\n'?'':p.innerText).join('\n')`;
 async function withPage(id,fn){const p=await connect(id);try{return await fn(p);}finally{p.close();}}
 async function confirmVideo(id,commit,settings={},pageRunner=withPage){
   if(commit!==true)throw Error('确认生成需要commit:true');
@@ -66,8 +69,8 @@ const server=http.createServer(async(req,res)=>{
   try{
     const u=new URL(req.url,'http://127.0.0.1:9230');
     if(req.method==='GET'&&u.pathname==='/health'){
-      try{const t=await targets();return reply(res,200,{ok:true,bridge_version:'1.2.0',service:'doubao-local-bridge',cdp_connected:true,pages:t.filter(x=>x.type==='page').length});}
-      catch(e){return reply(res,503,{ok:false,bridge_version:'1.2.0',service:'doubao-local-bridge',cdp_connected:false,error:e.message});}
+      try{const t=await targets();return reply(res,200,{ok:true,bridge_version:bridgeVersion,service:'doubao-local-bridge',cdp_connected:true,pages:t.filter(x=>x.type==='page').length});}
+      catch(e){return reply(res,503,{ok:false,bridge_version:bridgeVersion,service:'doubao-local-bridge',cdp_connected:false,error:e.message});}
     }
     if(req.method==='GET'&&u.pathname==='/targets')return reply(res,200,(await targets()).filter(x=>x.type==='page').map(({id,title,url})=>({id,title,url})));
     if(req.method==='POST'&&u.pathname==='/video/confirm'){const b=await body(req);return reply(res,200,await confirmVideo(b.target_id,b.commit,videoSettings(b)));}
@@ -76,19 +79,20 @@ const server=http.createServer(async(req,res)=>{
       const b=await body(req);
       const result=await withPage(b.target_id,async p=>{
         if(u.pathname==='/diagnostics'){
-          return p.evaluate(`(()=>{const r=globalThis.__doubaoLocalRequire;return {editorReady:!!document.querySelector('[data-testid="chat_input_input"]'),runtime:Array.isArray(globalThis['@flow-web/desktop:stable']),loginRequired:!!document.querySelector('[data-testid="to_login_button"]'),apiLoaded:!!r?.c?.['609347']?.exports.mH,quotaMethod:typeof r?.c?.['609347']?.exports.mH?.QueryVideoGenInfo,configMethod:typeof r?.c?.['609347']?.exports.mH?.SkillPack,skillType:r?.c?.['43016']?.exports.SkillType.VideoGeneration,parameterSetter:typeof r?.c?.['528914']?.exports.SW,testids:[...document.querySelectorAll('[data-testid]')].map(e=>e.getAttribute('data-testid')).filter(x=>/input|send|video|ratio|duration/i.test(x))}})()`);
+          return p.evaluate(`(()=>{const modern=${modernRuntime},r=globalThis.__doubaoLocalRequire;return {editorReady:!!document.querySelector('[data-testid="chat_input_input"]'),runtime:modern||Array.isArray(globalThis['@flow-web/desktop:stable']),runtime_variant:modern?'modern':'legacy',loginRequired:!!document.querySelector('[data-testid="to_login_button"]'),apiLoaded:!!(r?.c?.ZP?.exports.dQ??r?.c?.['609347']?.exports.mH),testids:[...document.querySelectorAll('[data-testid]')].map(e=>e.getAttribute('data-testid')).filter(x=>/input|send|video|ratio|duration/i.test(x))}})()`);
         }
-        if(u.pathname==='/video/controls'){await p.evaluate(bootstrap);return p.evaluate('('+liveVideoControls.toString()+')()');}
+        if(u.pathname==='/video/controls'){if(!await p.evaluate(modernRuntime))await p.evaluate(bootstrap);return p.evaluate(readControls);}
         if(u.pathname==='/video/open')return p.evaluate(`(()=>{if(document.querySelector('[data-testid="to_login_button"]'))throw Error('请先在豆包窗口登录');if(document.querySelector('[data-testid="skill_input_exit_button"]')?.textContent.includes('视频生成'))return {opened:true,already_open:true,submitted:false};const b=document.querySelector('[data-testid="skill_bar_button_17"]');if(!b)throw Error('没有视频生成入口');b.click();return {opened:true,submitted:false}})()`);
         if(u.pathname==='/inspect')return p.evaluate(`({url:location.href,title:document.title,text:document.body.innerText.slice(-12000),editors:[...document.querySelectorAll('textarea,[contenteditable="true"],input')].map(e=>({tag:e.tagName,testid:e.getAttribute('data-testid'),placeholder:e.getAttribute('placeholder'),role:e.getAttribute('role')})),buttons:[...document.querySelectorAll('button,[role="button"]')].slice(-60).map(e=>({text:e.innerText,testid:e.getAttribute('data-testid'),'aria-label':e.getAttribute('aria-label')})),webpack:!!globalThis.webpackChunkflow_web_extension})`);
         if(u.pathname==='/video/quota'||u.pathname==='/video/config'){
           await p.evaluate(bootstrap);
-          const call=u.pathname==='/video/quota'?'QueryVideoGenInfo()':`SkillPack({skill_type:r.c['43016'].exports.SkillType.VideoGeneration})`;
-          return p.evaluate(`(async()=>{if(document.querySelector('[data-testid="to_login_button"]'))throw Error('请先在豆包窗口登录；没有读取或复制原账号Cookie');const r=globalThis.__doubaoLocalRequire;if(!r.c?.['609347'])throw Error('API模块609347未加载');const api=r.c['609347'].exports.mH;if(!api)throw Error('客户端API结构已变化');const result=await api.${call};return result.data??result;})()`);
+          const quota=u.pathname==='/video/quota';
+          return p.evaluate(`(async()=>{if(document.querySelector('[data-testid="to_login_button"]'))throw Error('请先在豆包窗口登录');const r=globalThis.__doubaoLocalRequire,api=r.c?.ZP?.exports.dQ??r.c?.['609347']?.exports.mH,skill=r.c?.Ai0?.exports.K9?.VideoGeneration??r.c?.['43016']?.exports.SkillType?.VideoGeneration;if(!api||(!${quota}&&skill===undefined))throw Error('客户端旧版视频配置接口不可用');const result=await (${quota}?api.QueryVideoGenInfo():api.SkillPack({skill_type:skill}));return result.data??result;})()`);
         }
         if(u.pathname==='/video/prepare'){
-          await p.evaluate(bootstrap);
           const settings={ratio:b.ratio,duration:b.duration===undefined?undefined:String(b.duration),model:b.model};
+          if(await p.evaluate(modernRuntime))return prepareModernVideo(p,settings);
+          await p.evaluate(bootstrap);
           return p.evaluate(`(()=>{if(document.querySelector('[data-testid="to_login_button"]'))throw Error('请先在豆包窗口登录');const r=globalThis.__doubaoLocalRequire,params=r.c['528914']?.exports;if(!params?.SM)throw Error('参数模块未加载');const el=document.querySelector('[data-testid="chat_input"]');if(!el)throw Error('没有视频输入框');const root=el[Object.keys(el).find(k=>k.startsWith('__reactFiber'))];const stack=[root],seen=new Set(),controls=new Map();while(stack.length&&seen.size<5000){const f=stack.pop();if(!f||seen.has(f))continue;seen.add(f);if(f.child)stack.push(f.child);if(f.sibling)stack.push(f.sibling);for(const v of Object.values(f.memoizedProps??{})){for(const c of (Array.isArray(v)?v:[v])){if(typeof c?.valueKey==='string'&&c.valueKey.startsWith('video-')&&Array.isArray(c.options))controls.set(c.valueKey,c);}}}const wanted=${JSON.stringify(settings)},changes=[];for(const key of ['model','ratio','duration']){if(wanted[key]===undefined)continue;const full='video-'+key,control=controls.get(full),option=control?.options.find(o=>String(o.value)===String(wanted[key])||o.label===wanted[key]);if(!control||!option)throw Error('当前视频控件不提供该参数：'+key);const old=params.ej(full)??{};changes.push([full,{...old,...option,actionBarItemId:control.actionBarItemId,submitKey:control.submitKey??old.submitKey}]);}for(const [key,value]of changes)params.SM(key,value);return {prepared:true,submitted:false,settings:Object.fromEntries(changes.map(([key,o])=>[key,{value:o.value,label:o.label,id:o.id}]))};})()`);
         }
         if(u.pathname==='/video/draft'){
@@ -101,8 +105,8 @@ const server=http.createServer(async(req,res)=>{
         }
         if(b.commit!==true)throw Error('发送需要 commit:true；此操作可能消耗额度');
         if(typeof b.prompt!=='string'||!b.prompt.trim())throw Error('发送需提供与输入框完全一致的prompt');
-        await p.evaluate(bootstrap);
-        const check=await p.evaluate(`(()=>{if(document.querySelector('[data-testid="to_login_button"]'))throw Error('请先在豆包窗口登录');const es=[...document.querySelectorAll(${JSON.stringify(editorSelector)})].filter(e=>e.getClientRects().length);if(es.length!==1)throw Error('输入框不唯一');const text=(${readEditor})(es[0]);const btn=document.querySelector('[data-testid="chat_input_send_button"]');const toolbar=document.querySelector('[data-testid="chat_input"]')?.cloneNode(true);toolbar?.querySelectorAll('[data-testid="chat_input_input"],[contenteditable="true"],textarea').forEach(e=>e.remove());const params=globalThis.__doubaoLocalRequire.c['528914']?.exports;return {text,buttonFound:!!btn,disabled:btn?.disabled||btn?.getAttribute('aria-disabled')==='true',uiText:toolbar?.textContent??'',model:params?.YC('video-model'),ratio:params?.YC('video-ratio'),duration:params?.YC('video-duration')}})()`);
+        if(!await p.evaluate(modernRuntime))await p.evaluate(bootstrap);
+        const check=await p.evaluate(`(()=>{if(document.querySelector('[data-testid="to_login_button"]'))throw Error('请先在豆包窗口登录');const es=[...document.querySelectorAll(${JSON.stringify(editorSelector)})].filter(e=>e.getClientRects().length);if(es.length!==1)throw Error('输入框不唯一');const text=(${readEditor})(es[0]);const btn=document.querySelector('[data-testid="chat_input_send_button"]');const {selected,ui_text}=${readControls};return {text,buttonFound:!!btn,disabled:btn?.disabled||btn?.getAttribute('aria-disabled')==='true',uiText:ui_text,...selected}})()`);
         assertVideoSelection(check,videoSettings(b),b.prompt);
         await p.evaluate(`document.querySelector('[data-testid="chat_input_send_button"]').click();true`);
         return {submitted:true,generated:false,note:'仅表示发送按钮已点击；仍需检查客户端回复、额度及视频任务结果。'};

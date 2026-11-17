@@ -36,6 +36,21 @@ test('提交检查拒绝控件值或可见参数与自定义请求不符',()=>{
  assert.throws(()=>assertVideoSelection({...check,duration:'5',uiText:'Seedance 2.0 Mini 9:16 · 15s'},{...custom,duration:5},'prompt'));
  assert.throws(()=>assertVideoSelection({...check,model:'seedance_v2.0_std',uiText:'Seedance 2.0 Fast 9:16 · 10s'},{...custom,model:'seedance_v2.0_std'},'prompt'));
 });
+test('Flash 与普通 2.5 使用不同模型编号，提交和确认均精确区分',()=>{
+ const flash={model:'seedance_v2.5_flash',ratio:'9:16',duration:8};
+ const standard={...flash,model:'seedance_v2.5'};
+ for(const name of ['doubao_video_prepare','doubao_video_submit']){
+  const def=definitions.find(d=>d.name===name);
+  assert.ok(def.inputSchema.properties.model.enum.includes(flash.model));
+ }
+ const check={text:'prompt',buttonFound:true,disabled:false,model:flash.model,ratio:'9:16',duration:'8',uiText:'Seedance 2.5 Flash 9:16 · 8s'};
+ assertVideoSelection(check,flash,'prompt');
+ assert.throws(()=>assertVideoSelection({...check,uiText:'Seedance 2.5 9:16 · 8s'},flash,'prompt'));
+ assert.throws(()=>assertVideoSelection({...check,model:standard.model},standard,'prompt'));
+ const reply='模型： Seedance 2.5 Flash\n时长： 8 秒\n比例： 9:16 竖屏\n确认后我再开始生成视频。';
+ assert.match(confirmationPrompt(reply,flash),/Seedance 2\.5 Flash生成8秒/);
+ assert.throws(()=>confirmationPrompt(reply,standard));
+});
 test('请求去重包含所有生成参数，省略默认值与显式默认值一致',async()=>{
  const dir=await fs.mkdtemp(path.join(scratch,'doubao-params-'));const ledger=new Ledger(dir);let calls=0;
  try{const perform=async()=>{calls++;return {submitted:true};};await submitOnce(ledger,'custom','target','prompt',custom,perform);

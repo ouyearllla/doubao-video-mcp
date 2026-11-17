@@ -12,7 +12,7 @@ import {createHash,randomUUID} from 'node:crypto';
 const root=path.dirname(fileURLToPath(import.meta.url));
 const installedBridge=path.resolve(root,'../bridge/bridge.mjs');
 const bridgeFile=process.env.DOUBAO_BRIDGE_FILE??(existsSync(installedBridge)?installedBridge:path.resolve(root,'../doubao-local-api/bridge.mjs'));
-const {models,videoSettings}=await import(pathToFileURL(path.join(path.dirname(bridgeFile),'video-settings.mjs')).href);
+const {models,videoSettings,videoSettingsMatchUI}=await import(pathToFileURL(path.join(path.dirname(bridgeFile),'video-settings.mjs')).href);
 const api='http://127.0.0.1:9230';
 const stateDir=process.env.DOUBAO_STATE_DIR??path.join(os.homedir(),'.codex','doubao-mcp-state');
 const outputDefault=process.env.DOUBAO_OUTPUT_DIR??path.resolve(root,'..');
@@ -196,7 +196,7 @@ async function prepareVideo(id,args){
  let last;
  try{last=await waitFor(async()=>last=await bridge('/video/controls',{target_id:id}),d=>d.selected.model===model&&d.controls['video-ratio']?.options.some(o=>o.value===ratio)&&d.controls['video-duration']?.options.some(o=>String(o.value)===String(duration)),{label:'模型的比例与时长选项'});}catch{throw Error('该模型未提供所选比例或时长，或控件未就绪；当前选项：'+JSON.stringify(last?.controls??{}));}
  await bridge('/video/prepare',{target_id:id,ratio,duration});
- const verified=await waitFor(()=>bridge('/video/controls',{target_id:id}),d=>d.selected.model===model&&d.selected.ratio===ratio&&String(d.selected.duration)===String(duration)&&d.ui_text.includes(models[model])&&d.ui_text.includes(ratio==='auto'?'自动':ratio)&&d.ui_text.includes(duration+'s'),{label:'视频参数显示'});
+ const verified=await waitFor(()=>bridge('/video/controls',{target_id:id}),d=>d.selected.model===model&&d.selected.ratio===ratio&&String(d.selected.duration)===String(duration)&&videoSettingsMatchUI(d.ui_text,settings),{label:'视频参数显示'});
  return {prepared:true,submitted:false,settings,ui_verified:true,available:verified.controls};
 }
 async function listRequests(limit=25){

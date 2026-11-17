@@ -1,6 +1,6 @@
 {
   "name": "doubao-video-mcp",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "通过本机豆包桌面客户端生成和下载视频的 MCP 工具，支持模型、比例与时长设置。",
   "type": "module",
   "license": "MIT",
