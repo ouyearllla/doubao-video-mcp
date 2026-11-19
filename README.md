@@ -8,6 +8,12 @@
 
 **需要：Windows 桌面环境、Node.js 22+、豆包桌面客户端。**
 
+## 使用声明
+
+本项目是第三方开源工具，仅供个人学习与技术交流。请使用自己的豆包账号，并遵守[豆包用户协议](https://www.doubao.com/legal/terms)。
+
+下载无水印视频需要开通包含该权益的豆包付费订阅，具体以当前账号在豆包客户端中显示的权益为准。
+
 ## 36 秒演示
 
 [![观看 MCP 视频生成与下载演示](https://raw.githubusercontent.com/ouyearllla/doubao-video-mcp/main/docs/demo-cover.png)](https://github.com/ouyearllla/doubao-video-mcp/blob/main/docs/demo.mp4)
